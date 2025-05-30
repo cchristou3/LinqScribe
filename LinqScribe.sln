@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqScribe", "LinqScribe\LinqScribe.csproj", "{5F65416F-C405-4C07-88D5-812C59E1022E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqScribeTests", "LinqScribeTests\LinqScribeTests.csproj", "{013ED3FF-C5F5-41EA-8B6F-0C8BF3A4F114}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5F65416F-C405-4C07-88D5-812C59E1022E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F65416F-C405-4C07-88D5-812C59E1022E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F65416F-C405-4C07-88D5-812C59E1022E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F65416F-C405-4C07-88D5-812C59E1022E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{013ED3FF-C5F5-41EA-8B6F-0C8BF3A4F114}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{013ED3FF-C5F5-41EA-8B6F-0C8BF3A4F114}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{013ED3FF-C5F5-41EA-8B6F-0C8BF3A4F114}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{013ED3FF-C5F5-41EA-8B6F-0C8BF3A4F114}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
