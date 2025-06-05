@@ -5,14 +5,17 @@ namespace LinqScribe.IQueryableExtensions;
 
 public static class DynamicFiltersExtensions
 {
-    public static IQueryable<TSource> FilterWith<TSource, TFilters>(this IQueryable<TSource> source, TFilters filter) where TFilters : class, new()
+    public static IQueryable<TSource> FilterWith<TSource, TFilters>(this IQueryable<TSource> source, TFilters filter) where TFilters : class
     {
-        var filterProperties = filter.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).ToDictionary(k => k.Name);
+        var filterProperties = filter
+            .GetType()
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .ToDictionary(k => k.Name);
         
         if (filterProperties.Count == 0)
             return source;
         
-        var filterNames = filterProperties.Keys;
+        var filterNames = filterProperties.Keys.ToHashSet();
         
         var sourceType = typeof(TSource);
         var sourceProperties = sourceType

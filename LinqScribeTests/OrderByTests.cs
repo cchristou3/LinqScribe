@@ -3,6 +3,7 @@ using LinqScribeTests.Migrations;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using static LinqScribe.IQueryableExtensions.DynamicOrderExtensions;
+using static LinqScribe.IQueryableExtensions.DynamicSelectExtensions;
 
 namespace LinqScribeTests;
 
@@ -17,15 +18,31 @@ public class OrderByTests(SqlContainerFixture fixture) : IClassFixture<SqlContai
         await using var context = new LinqScribeClientDbContext(DbOptions);
         
         // Act
-        var list = await context.Entities
+        var names = await context.Entities
             .AsNoTracking()
             .OrderBy("Name")
+            .Select("Name")
             .ToListAsync();
         
         // Assert
-        Assert.True(list[0].Name == "Alpha");
-        Assert.True(list[1].Name == "Beta");
-        Assert.True(list[2].Name == "Gamma");
+        names.ShouldBeInOrder();
+    }
+    
+    [Fact]
+    public async Task OrderBy_WithNameProperty_OrdersEntitiesBackwardsAlphabetically()
+    {
+        // Arrange
+        await using var context = new LinqScribeClientDbContext(DbOptions);
+        
+        // Act
+        var names = await context.Entities
+            .AsNoTracking()
+            .OrderByDescending("Name")
+            .Select("Name")
+            .ToListAsync();
+        
+        // Assert
+        names.ShouldBeInOrder(SortDirection.Descending);
     }
     
     [Fact]
@@ -61,6 +78,24 @@ public class OrderByTests(SqlContainerFixture fixture) : IClassFixture<SqlContai
         
         // Assert
         Assert.True(list[0].Id < list[1].Id);
+    }
+    
+    [Fact]
+    public async Task ThenBy_WithNameAndId_OrdersEntitiesByNameThenByIdDescending()
+    {
+        // Arrange
+        await using var context = new LinqScribeClientDbContext(DbOptions);
+        
+        // Act
+        var list = await context.Entities
+            .AsNoTracking()
+            .Where(x => x.Name == "Gamma")
+            .OrderBy("Name")
+            .ThenByDescending("Id")
+            .ToListAsync();
+        
+        // Assert
+        Assert.True(list[0].Id > list[1].Id);
     }
     
     [Fact]
