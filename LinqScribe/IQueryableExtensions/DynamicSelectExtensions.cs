@@ -8,56 +8,50 @@ namespace LinqScribe.IQueryableExtensions;
 
 public static class DynamicSelectExtensions
 {
-    /*
-     * Concept:
-     * this.CustomSet(tableWithChildType)
-     *  .SelectProperty<string>(tableWithChildType, propertyToRetrieve: "Name")
-     *  .FirstOrDefault();
-     * This will translate to the following SQL:
-     * SELECT Name FROM [tableWithChildType]
-     */
-    public static IQueryable<dynamic> Select<TSource>(this IQueryable<TSource> source, string propertyToRetrieve)
+    /// <summary>
+    /// Selects the property of the given database model.
+    /// <code>
+    /// // SELECT Name FROM Entities
+    /// context.Entities.Select("Name").ToList();
+    /// </code>
+    /// </summary>
+    /// <param name="source">The IQueryable source to select the property from.</param>
+    /// <param name="property">The property to select.</param>
+    /// <typeparam name="TSource">Any database model.</typeparam>
+    /// <returns>The IQueryable selecting the given property.</returns>
+    public static IQueryable<dynamic> Select<TSource>(this IQueryable<TSource> source, string property) where TSource : class
     {
-        var type = typeof(TSource);
-        EnsureExist(type, propertyToRetrieve);
+        EnsureExist(typeof(TSource), property);
 
         // x => x.Property
-        var selectLambda = BuildGenericSelectorLambda<TSource>(propertyToRetrieve);
+        var selectLambda = BuildGenericSelectorLambda<TSource>(property);
 
         return source.Select(selectLambda);
-
-        // Create an expression that calls the Select method of Queryable with the above constructed expression lambda
-        var resultExp = Expression.Call(
-            typeof(Queryable),
-            nameof(Queryable.Select),
-            [type, typeof(object)],
-            source.Expression,
-            Expression.Quote(selectLambda)
-        );
-
-        return source.Provider.CreateQuery<dynamic>(resultExp);
     }
 
-    /*
-     * Concept:
-     * this.CustomSet(tableWithChildType)
-     *  .SelectProperties(tableWithChildType, propertiesToRetrieve: new[] { "Name", "Age", "Modules" })
-     *  .FirstOrDefault();
-     * This will translate to the following SQL:
-     * SELECT Name, Age, Modules FROM [tableWithChildType]
-     */
-    public static IQueryable<dynamic> Select<TSource>(this IQueryable<TSource> source, params string[] propertiesToRetrieve)
+    /// <summary>
+    /// Selects the provided properties of the given database model.
+    /// <code>
+    /// // SELECT Name, Age FROM Entities
+    /// context.Entities.Select("Name", "Age").ToList();
+    /// </code>
+    /// </summary>
+    /// <param name="source">The IQueryable source to select the property from.</param>
+    /// <param name="properties">The properties to select.</param>
+    /// <typeparam name="TSource">Any database model.</typeparam>
+    /// <returns>A projection of the IQueryable that contains the given properties.</returns>
+    public static IQueryable<dynamic> Select<TSource>(this IQueryable<TSource> source, params string[] properties)
     {
         var type = typeof(TSource);
-        EnsureExist(type, propertiesToRetrieve);
+        EnsureExist(type, properties);
 
         // "p" is going to be the parameter in our lambda expressions. E.g. (p => ...)
         var parameter = Expression.Parameter(type, "p");
 
         // Create a list of MemberExpression for each property to retrieve
-        var propertyAccessList = new Dictionary<string, MemberExpression>(propertiesToRetrieve.Length);
-        var propertyTypes = new Dictionary<string, Type>(propertiesToRetrieve.Length);
-        foreach (var propertyName in propertiesToRetrieve)
+        var propertyAccessList = new Dictionary<string, MemberExpression>(properties.Length);
+        var propertyTypes = new Dictionary<string, Type>(properties.Length);
+        foreach (var propertyName in properties)
         {
             // Get the property (case-insensitive)
             var property = type.GetPublicInstanceProperty(propertyName);
@@ -87,22 +81,16 @@ public static class DynamicSelectExtensions
 
         // Convert it to a lambda:
         // p => new AnonymousType() { Id = p.Id, Name = p.Name }
-        var selectLambda = Expression.Lambda(memberInit, parameter);
-
-        // Create an expression that calls the Select method of Queryable with the above constructed expression lambda
-        var resultExp = Expression.Call(
-            typeof(Queryable),
-            nameof(Queryable.Select),
-            [type, anonymousType],
-            source.Expression,
-            Expression.Quote(selectLambda)
-        );
-
-        return source.Provider.CreateQuery<dynamic>(resultExp);
+        var selectLambda = Expression.Lambda<Func<TSource, dynamic>>(memberInit, parameter);
+        return source.Select(selectLambda);
     }
-    
 
-    private static Type CreateAnonymousType(Dictionary<string, Type> propertyTypes)
+    /// <summary>
+    /// Creates a new "Anonymous" type that contains the provided properties.
+    /// </summary>
+    /// <param name="properties">A dictionary containing the property names and their corresponding type.</param>
+    /// <returns>An anonymous type containing the provided properties.</returns>
+    private static Type CreateAnonymousType(Dictionary<string, Type> properties)
     {
         AssemblyName assemblyName = new AssemblyName("AnonymousTypes");
         AssemblyBuilder assemblyBuilder =
@@ -111,7 +99,7 @@ public static class DynamicSelectExtensions
         TypeBuilder typeBuilder =
             moduleBuilder.DefineType("AnonymousType", TypeAttributes.Public | TypeAttributes.Class);
 
-        foreach (var entry in propertyTypes)
+        foreach (var entry in properties)
         {
             typeBuilder.DefineField(entry.Key, entry.Value, FieldAttributes.Public);
         }

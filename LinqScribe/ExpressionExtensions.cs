@@ -5,8 +5,18 @@ namespace LinqScribe;
 public static class ExpressionExtensions
 {
     /// <summary>
-    /// Builds an expression similar to: (TSource x) => x.PropertyName
+    /// Builds a strongly-typed expression that accesses a specified property on <typeparamref name="TSource"/>.
+    /// The resulting expression is equivalent to: <c>(TSource x) => x.PropertyName</c>.
     /// </summary>
+    /// <typeparam name="TSource">The type of the input parameter in the lambda expression.</typeparam>
+    /// <param name="propertyName">The name of the property to access. The search is case-insensitive.</param>
+    /// <param name="propertyType">
+    /// When this method returns, contains the <see cref="Type"/> of the specified property if found; otherwise, undefined.
+    /// </param>
+    /// <returns>
+    /// A <see cref="LambdaExpression"/> representing a lambda expression that accesses the specified property on an instance of <typeparamref name="TSource"/>.
+    /// </returns>
+    /// <exception cref="ArgumentException">Thrown if the specified property does not exist on <typeparamref name="TSource"/>.</exception>
     public static LambdaExpression BuildSelectorLambda<TSource>(string propertyName, out Type propertyType)
     {
         var type = typeof(TSource);
@@ -27,9 +37,20 @@ public static class ExpressionExtensions
     }
     
     /// <summary>
-    /// Builds an expression similar to: (TSource x) => (object)x.PropertyName
+    /// Builds a lambda expression that dynamically accesses a specified property of <typeparamref name="TSource"/>.  
+    /// The resulting expression is equivalent to: <c>(TSource x) => (dynamic)x.PropertyName</c>.
     /// </summary>
-    public static Expression<Func<TSource, object>> BuildGenericSelectorLambda<TSource>(string propertyName)
+    /// <typeparam name="TSource">The type of the parameter in the lambda expression.</typeparam>
+    /// <param name="propertyName">
+    /// The name of the property to access. The lookup is case-insensitive and must match a public instance property on <typeparamref name="TSource"/>.
+    /// </param>
+    /// <returns>
+    /// An <see cref="Expression{Func{TSource, dynamic}}"/> representing a lambda that returns the value of the specified property as <c>dynamic</c>.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown if the specified property does not exist on <typeparamref name="TSource"/>.
+    /// </exception>
+    public static Expression<Func<TSource, dynamic>> BuildGenericSelectorLambda<TSource>(string propertyName)
     {
         var type = typeof(TSource);
 
@@ -47,20 +68,7 @@ public static class ExpressionExtensions
             ? Expression.Convert(propertyAccess, typeof(object))
             : propertyAccess;
 
-        // Final lambda: x => (object)x.Property
-        return Expression.Lambda<Func<TSource, object>>(body, parameter);
-    }
-    
-    /// <summary>
-    /// Merges predicates into a single predicate delimited with ANDs (&&)
-    /// </summary>
-    /// <param name="predicates">A list of predicates</param>
-    /// <returns>The combined predicate</returns>
-    public static BinaryExpression JoinPredicates(this IEnumerable<BinaryExpression> predicates)
-    {
-        var predicateResult = predicates.First();
-        return predicates
-            .Skip(1)
-            .Aggregate(predicateResult, (current, predicate) => Expression.AndAlso(current, predicate));
+        // Final lambda: x => (dynamic)x.Property
+        return Expression.Lambda<Func<TSource, dynamic>>(body, parameter);
     }
 }
