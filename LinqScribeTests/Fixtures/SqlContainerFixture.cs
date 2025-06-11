@@ -26,6 +26,7 @@ public class SqlContainerFixture : IAsyncLifetime
         await context.Database.MigrateAsync();
         await context.Database.EnsureCreatedAsync();
         await TestDataSeeder.SeedAsync(context);
+        await TestDataSeeder.SeedCustomersAsync(context);
     }
 
     public async Task DisposeAsync() => await Container.DisposeAsync();

@@ -7,49 +7,57 @@ public static class DynamicFiltersExtensions
 {
     public static IQueryable<TSource> FilterWith<TSource, TFilters>(this IQueryable<TSource> source, TFilters filter) where TFilters : class
     {
+        var parameter = Expression.Parameter(typeof(TSource), "p");
+        var predicate = BuildExpression(typeof(TSource), filter, parameter);
+        var lambda = Expression.Lambda<Func<TSource, bool>>(predicate!, parameter);
+        return source.Where(lambda);
+    }
+    
+    private static BinaryExpression? BuildExpression<TFilters>(Type sourceType, TFilters filter, Expression parameter) where TFilters : class
+    {
         var filterProperties = filter
             .GetType()
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .ToDictionary(k => k.Name);
-        
+
         if (filterProperties.Count == 0)
-            return source;
+            return null;
         
         var filterNames = filterProperties.Keys.ToHashSet();
         
-        var sourceType = typeof(TSource);
         var sourceProperties = sourceType
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(x => filterNames.Contains(x.Name))
             .ToList();
-        
+
         if (sourceProperties.Count == 0)
-            return source;
+            return null;
         
         // "p" is going to be the parameter in our lambda expressions. E.g. (p => ...)
-        var parameter = Expression.Parameter(sourceType, "p");
         BinaryExpression? predicate = null;
         foreach (var sourceProperty in sourceProperties)
         {
-            object? filterValue = filterProperties[sourceProperty.Name].GetValue(filter);
+            object? value = filterProperties[sourceProperty.Name].GetValue(filter);
 
-            if (filterValue == null) continue;
+            if (value == null) continue;
             
-            // Access the property: "x.SourceProperty"
-            var propertyAccess = Expression.MakeMemberAccess(parameter, sourceProperty);
+            var propertyAccess = Expression.Property(parameter, sourceProperty); // Access the property: "x.SourceProperty"
 
-            // x.SourceProperty == filterValue
-            if (predicate is null)
+            BinaryExpression? expression;
+            if (IsPrimitiveOrString(sourceProperty.PropertyType))
             {
-                predicate = propertyAccess.EqualsTo(filterValue);
+                expression = propertyAccess.EqualsTo(value);
             }
             else
             {
-                predicate = predicate.AndAlso(propertyAccess.EqualsTo(filterValue));
+                expression = BuildExpression(sourceProperty.PropertyType, value, propertyAccess);
             }
+            predicate = predicate == null ? expression : Expression.AndAlso(predicate, expression!);
         }
-        
-        var lambda = Expression.Lambda<Func<TSource, bool>>(predicate!, parameter);
-        return source.Where(lambda);
+
+        return predicate;
     }
+    
+    private static bool IsPrimitiveOrString(Type type) =>
+        type.IsPrimitive || type == typeof(string) || type == typeof(DateTime) || type == typeof(decimal);
 }
