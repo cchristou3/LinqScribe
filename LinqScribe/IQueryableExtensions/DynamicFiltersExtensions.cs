@@ -48,7 +48,7 @@ public static class DynamicFiltersExtensions
             var propertyAccess = Expression.Property(parameter, sourceProperty); // Access the property: "x.SourceProperty"
 
             Expression? boolExpression;
-            if (IsPrimitiveOrString(sourceProperty.PropertyType))
+            if (IsValueTypeOrString(sourceProperty.PropertyType))
             {
                 boolExpression = BuildComparisonExpression(value, filterProperties[sourceProperty.Name].PropertyType, propertyAccess);
             }
@@ -86,8 +86,8 @@ public static class DynamicFiltersExtensions
         return propertyAccess.EqualsTo(value);
     }
     
-    private static bool IsPrimitiveOrString(Type type) =>
-        type.IsPrimitive || type.IsValueType || type == typeof(string);
+    private static bool IsValueTypeOrString(Type type) =>
+        type.IsValueType || type == typeof(string);
     
     private static string RemoveListPostfixIfExists(string name)
     {
