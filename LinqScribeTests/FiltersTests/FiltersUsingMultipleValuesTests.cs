@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using LinqScribe.IQueryableExtensions;
 using LinqScribeTests.Fixtures;
 using LinqScribeTests.Migrations;
@@ -8,7 +7,8 @@ using Shouldly;
 
 namespace LinqScribeTests.FiltersTests;
 
-public class FiltersUsingMultipleValuesTests(SqlContainerFixture fixture) : IClassFixture<SqlContainerFixture>
+[Collection(nameof(CollectionDefinitions.SharedDatabase))]
+public class FiltersUsingMultipleValuesTests(SqlContainerFixture fixture) 
 {
     private DbContextOptions<LinqScribeClientDbContext> DbOptions { get; } = fixture.DbOptions;
     

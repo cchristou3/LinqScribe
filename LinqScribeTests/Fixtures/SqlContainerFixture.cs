@@ -4,6 +4,14 @@ using Testcontainers.MsSql;
 
 namespace LinqScribeTests.Fixtures;
 
+[CollectionDefinition(nameof(CollectionDefinitions.SharedDatabase))]    
+public class DatabaseCollection : ICollectionFixture<SqlContainerFixture>
+{
+    // This class has no code, and is never created. Its purpose is simply
+    // to be the place to apply [CollectionDefinition] and all the
+    // ICollectionFixture<> interfaces.
+}
+
 public class SqlContainerFixture : IAsyncLifetime
 {
     public MsSqlContainer Container { get; set; }
