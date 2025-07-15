@@ -8,7 +8,8 @@ using Shouldly;
 
 namespace LinqScribeTests.FiltersTests;
 
-public class FiltersPrimitiveTypesTests(SqlContainerFixture fixture) : IClassFixture<SqlContainerFixture>
+[Collection(nameof(CollectionDefinitions.SharedDatabase))]
+public class FiltersPrimitiveTypesTests(SqlContainerFixture fixture) 
 {
     private DbContextOptions<LinqScribeClientDbContext> DbOptions { get; } = fixture.DbOptions;
     

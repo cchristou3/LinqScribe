@@ -6,7 +6,8 @@ using static LinqScribe.IQueryableExtensions.DynamicSelectExtensions;
 
 namespace LinqScribeTests;
 
-public class SelectTests(SqlContainerFixture fixture) : IClassFixture<SqlContainerFixture>
+[Collection(nameof(CollectionDefinitions.SharedDatabase))]
+public class SelectTests(SqlContainerFixture fixture) 
 {
     private DbContextOptions<LinqScribeClientDbContext> DbOptions { get; } = fixture.DbOptions;
     
